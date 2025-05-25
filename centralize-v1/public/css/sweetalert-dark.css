@@ -1,0 +1,20 @@
+/* SweetAlert Dark Mode Styles - Minimal Version */
+
+/* When dark mode is active, apply these styles */
+[data-theme-mode="dark"] .swal2-popup {
+  background-color: #2a2a2a !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-theme-mode="dark"] .swal2-title {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-theme-mode="dark"] .swal2-html-container {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Style the toast popup as well */
+[data-theme-mode="dark"] .swal2-toast {
+  background-color: #2a2a2a !important;
+}

@@ -1,0 +1,14 @@
+/* Table grid separation styles */
+.cutoff-border-start {
+    border-left: 1px solid #6c757d !important;
+}
+.cutoff-border-end {
+    border-right: 1px solid #6c757d !important;
+}
+.table-cutoff {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.table-cutoff th, .table-cutoff td {
+    border: 1px solid #495057;
+}

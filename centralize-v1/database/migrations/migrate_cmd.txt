@@ -1,0 +1,40 @@
+# Laravel Migration Commands for PKMS_Boots Project
+
+## Basic Migration Commands
+php artisan migrate                  # Run all pending migrations
+php artisan migrate:rollback         # Rollback the last batch of migrations
+php artisan migrate:reset            # Rollback all migrations
+php artisan migrate:refresh          # Rollback all migrations and run them again
+php artisan migrate:status           # Show migration status
+
+## Available Migrations in Project
+# Core System Tables
+0001_01_01_000000_create_users_table.php
+0001_01_01_000001_create_cache_table.php
+0001_01_01_000002_create_jobs_table.php
+
+# Application Tables
+2024_06_01_000000_create_employees_table.php
+2024_06_10_000000_create_vi_prod_endtime_submitted_table.php
+2024_06_11_000000_create_vi_prod_wip_realtime_table.php
+2024_06_12_000000_create_vi_eqp_mc_list_table.php
+2024_06_12_000000_create_vi_lipas_models_table.php
+2024_06_13_000000_create_vi_qty_class_table.php
+2024_06_14_000000_create_vi_capa_ref_table.php
+
+## Specific Migration Commands
+# Run specific migration
+php artisan migrate --path=database/migrations/2024_06_14_000000_create_vi_capa_ref_table.php
+
+# Rollback specific migration
+php artisan migrate:rollback --step=1
+
+# Run migrations with seed data
+php artisan migrate --seed
+
+# Run migrations fresh (drop all tables and re-run migrations)
+php artisan migrate:fresh
+
+# Run migrations fresh with seed data
+php artisan migrate:fresh --seed
+
