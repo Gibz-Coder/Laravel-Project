@@ -64,11 +64,21 @@
             }
         }, true);
 
+        // Add event delegation for Lot No input fields to capitalize on input
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.classList.contains('lot-no-input')) {
+                capitalizeLotNo(e.target);
+            }
+        }, true);
+
         // Add direct event listeners to existing lot-no-input fields
         const lotNoInputs = document.querySelectorAll('.lot-no-input');
         lotNoInputs.forEach(input => {
             input.addEventListener('blur', function() {
                 lookupLotInfo(this);
+            });
+            input.addEventListener('input', function() {
+                capitalizeLotNo(this);
             });
 
             // Add keydown event listener for Enter key
@@ -406,6 +416,9 @@
             lotNoInput.addEventListener('blur', function() {
                 lookupLotInfo(this);
             });
+            lotNoInput.addEventListener('input', function() {
+                capitalizeLotNo(this);
+            });
 
             // Add keydown event listener for Enter key
             lotNoInput.addEventListener('keydown', function(e) {
@@ -533,6 +546,9 @@
         if (lotNoInput) {
             lotNoInput.addEventListener('blur', function() {
                 lookupLotInfo(this);
+            });
+            lotNoInput.addEventListener('input', function() {
+                capitalizeLotNo(this);
             });
 
             // Add keydown event listener for Enter key
@@ -928,6 +944,28 @@
 
             // Remove loading state
             input.classList.remove('is-loading');
+        }
+    }
+
+    /**
+     * Capitalize the Lot No input field value
+     * @param {HTMLInputElement} input - The Lot No input field
+     */
+    function capitalizeLotNo(input) {
+        if (!input || !input.value) return;
+
+        // Get current cursor position
+        const cursorPosition = input.selectionStart;
+
+        // Capitalize the value
+        const capitalizedValue = input.value.toUpperCase();
+
+        // Only update if the value has changed to avoid unnecessary operations
+        if (input.value !== capitalizedValue) {
+            input.value = capitalizedValue;
+
+            // Restore cursor position
+            input.setSelectionRange(cursorPosition, cursorPosition);
         }
     }
 
@@ -1502,9 +1540,13 @@
                     console.warn('Duplicate entries detected:', data.duplicates);
 
                     // Format duplicate details for display
-                    const duplicateDetails = data.duplicates.map(d =>
-                        `MC No: ${d.mc_no} (already has lot: ${d.existing_lot_id})`
-                    ).join('\n');
+                    const duplicateDetails = data.duplicates.map(d => {
+                        if (d.reason && d.reason.includes('Same lot number already exists')) {
+                            return `${d.lot_id} (MC: ${d.existing_mc_no})`;
+                        } else {
+                            return `MC: ${d.mc_no} (lot: ${d.existing_lot_id})`;
+                        }
+                    }).join('\n');
 
                     message += `\n\nDuplicates:\n${duplicateDetails}`;
                 }
@@ -1538,7 +1580,7 @@
                 }
             } else {
                 // Show error message
-                let errorMessage = 'Failed to save endtime entries.';
+                let errorMessage = 'Error!.';
                 if (data.error_count > 0 && data.errors) {
                     errorMessage += ' Errors: ' + data.errors.map(e => e.message).join(', ');
                 }
@@ -1549,14 +1591,11 @@
 
                     // Format duplicate details for display
                     const duplicateDetails = data.duplicates.map(d => {
-                        let message = `MC No: ${d.mc_no} (already has lot: ${d.existing_lot_id})`;
-                        if (d.qty_class) {
-                            message += ` - Lot size class: ${d.qty_class}`;
-                            if (d.qty_class === 'large') {
-                                message += ' (Cannot add multiple large lots to same machine)';
-                            }
+                        if (d.reason && d.reason.includes('Same lot number already exists')) {
+                            return `${d.lot_id} (MC: ${d.existing_mc_no})`;
+                        } else {
+                            return `MC: ${d.mc_no} (lot: ${d.existing_lot_id})`;
                         }
-                        return message;
                     }).join('\n');
 
                     errorMessage += `\n\nDuplicates:\n${duplicateDetails}`;
@@ -1786,7 +1825,7 @@
                 }
             } else {
                 // Show error message
-                let errorMessage = 'Failed to save submitted lot entries.';
+                let errorMessage = 'Error!.';
                 if (data.error_count > 0 && data.errors) {
                     errorMessage += ' Errors: ' + data.errors.map(e => e.message).join(', ');
                 }
@@ -1797,14 +1836,11 @@
 
                     // Format duplicate details for display
                     const duplicateDetails = data.duplicates.map(d => {
-                        let message = `MC No: ${d.mc_no} (already has lot: ${d.existing_lot_id})`;
-                        if (d.qty_class) {
-                            message += ` - Lot size class: ${d.qty_class}`;
-                            if (d.qty_class === 'large') {
-                                message += ' (Cannot add multiple large lots to same machine)';
-                            }
+                        if (d.reason && d.reason.includes('Same lot number already exists')) {
+                            return `${d.lot_id} (MC: ${d.existing_mc_no})`;
+                        } else {
+                            return `MC: ${d.mc_no} (lot: ${d.existing_lot_id})`;
                         }
-                        return message;
                     }).join('\n');
 
                     errorMessage += `\n\nDuplicates:\n${duplicateDetails}`;

@@ -103,73 +103,8 @@
                 <!-- Update WIP Modal Button -->
                 <div class="div">
                     <button class="btn btn-warning-light btn-wave me-3" data-bs-toggle="modal" data-bs-target="#updateWipModal">Update wip!</button>
-                    <!-- Update WIP Modal -->
-                    <div class="modal fade" id="updateWipModal" tabindex="-1" aria-labelledby="updateWipModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="updateWipModalLabel">Update WIP Data</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <!-- Alert container for displaying messages -->
-                                    <div id="wip-alert-container"></div>
-
-                                    <!-- Instructions for WIP data format -->
-                                    <div class="alert alert-info mb-3">
-                                        <h6 class="alert-heading fw-bold"><i class="ri-information-line me-1"></i> Instructions:</h6>
-                                        <p class="mb-1">1. <a href="{{ asset('files/update_wip.xlsx') }}" class="text-primary fw-bold" download><i class="ri-file-excel-2-line me-1"></i>Download this Excel file</a></p>
-                                        <p class="mb-1">2. Copy raw data from MES (40281) Grid (simple) and paste it into the Excel file</p>
-                                        <p class="mb-1">3. Copy data from Excel columns including the header row</p>
-                                        <p class="mb-1">4. Paste the data into the text area below</p>
-                                        <p class="mb-1">5. Click "Update WIP" to process the data</p>
-                                        <p class="mb-0"><strong>Note:</strong> This will replace ALL existing WIP data in the system.</p>
-                                    </div>
-
-                                    <!-- Data format example -->
-                                    <!-- <div class="alert alert-light mb-3">
-                                        <h6 class="alert-heading fw-bold"><i class="ri-file-list-line me-1"></i> Expected Data Format:</h6>
-                                        <p class="mb-0 text-muted">Required columns: no, site, facility, major_process, sub_process, lot_status, lot_id, model_id, lot_qty, lot_size (maps to chip_size), work_type, hold_yn, tat_days, location, lot_details, routing_name, production_team_type, chip_type, special_code, powder_type, work_equip, rack, facility_2</p>
-                                    </div> -->
-
-                                    <!-- Sample data format -->
-                                    <!-- <div class="alert alert-secondary mb-3">
-                                        <h6 class="alert-heading fw-bold"><i class="ri-file-code-line me-1"></i> Sample Data Format:</h6>
-                                        <p class="mb-1 text-muted" style="font-family: monospace; font-size: 0.8rem; white-space: nowrap; overflow-x: auto;">
-                                            no&nbsp;&nbsp;site&nbsp;&nbsp;facility&nbsp;&nbsp;major_process&nbsp;&nbsp;sub_process&nbsp;&nbsp;lot_status&nbsp;&nbsp;lot_id&nbsp;&nbsp;model_id&nbsp;&nbsp;lot_qty&nbsp;&nbsp;lot_size&nbsp;&nbsp;work_type&nbsp;&nbsp;hold_yn&nbsp;&nbsp;tat_days&nbsp;&nbsp;location&nbsp;&nbsp;lot_details&nbsp;&nbsp;routing_name&nbsp;&nbsp;production_team_type&nbsp;&nbsp;chip_type&nbsp;&nbsp;special_code&nbsp;&nbsp;powder_type&nbsp;&nbsp;work_equip&nbsp;&nbsp;rack&nbsp;&nbsp;facility_2<br>
-                                            1&nbsp;&nbsp;SEMPHIL&nbsp;&nbsp;SEMPHIL Production#5&nbsp;&nbsp;Visual&nbsp;&nbsp;Receive in Visual&nbsp;&nbsp;Wait&nbsp;&nbsp;AKCBP4Y&nbsp;&nbsp;CL21A226MAYNNNB&nbsp;&nbsp;958648&nbsp;&nbsp;21&nbsp;&nbsp;Normal&nbsp;&nbsp;N&nbsp;&nbsp;0&nbsp;&nbsp;SO_OST_02&nbsp;&nbsp;MP&nbsp;&nbsp;Visual_Normal-Newlot_1st Insp.&nbsp;&nbsp;IT team&nbsp;&nbsp;R : In-house chip ( R )&nbsp;&nbsp;A,R,SSBT-02(NB342AT01)&nbsp;&nbsp;A,R,SSBT-02(NB342AT01)&nbsp;&nbsp;SO_OST_02&nbsp;&nbsp;SO_OST_02&nbsp;&nbsp;SO_OST_02
-                                        </p>
-                                    </div> -->
-
-                                    <!-- Form for WIP data with both JavaScript and direct form submission -->
-                                    <div class="mb-3">
-                                        <textarea id="wip-data-textarea" class="form-control" rows="15" style="font-family: monospace;min-height: 300px;" placeholder="Paste your raw WIP data here including the header row..."></textarea>
-                                    </div>
-
-                                    <!-- Hidden form for direct submission as fallback -->
-                                    <form id="wip-direct-form" action="/api/process-wip-data" method="POST" style="display: none;">
-                                        @csrf
-                                        <input type="hidden" name="wipData" id="wip-data-hidden">
-                                        <input type="hidden" name="wip_data" id="wip-data-hidden-alt">
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    <button type="button" id="process-wip-btn" class="btn btn-primary">
-                                        <span id="process-wip-text">Update wip!</span>
-                                        <span id="process-wip-loading" style="display: none;">
-                                            <i class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></i>
-                                            Processing...
-                                        </span>
-                                    </button>
-                                    <!-- Direct form submit button as fallback -->
-                                    <button type="button" id="process-wip-direct-btn" class="btn btn-warning" style="display: none;">
-                                        <span>Try Direct Submit</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- WIP Modal will be included from separate component -->
+                    @include('components.wip-modal')
                 </div>
 
                 <!-- Export Button with Date Range Picker -->
@@ -235,7 +170,7 @@
     <!-- End::app-content -->
 
     <!-- Modals -->
-    @livewire('endtime-dashboard.lot-list-modal')
+    @include('components.lot-list-modal')
 
     <!-- Add Endtime Modal -->
     <div class="modal fade" id="addEndtimeModal" tabindex="-1" aria-labelledby="addEndtimeModalLabel" aria-hidden="true" wire:ignore.self>
@@ -727,165 +662,64 @@
             window.addEventListener('beforeunload', function() {
                 showLoadingOverlay();
             });
+        });
 
-            // WIP Data Processing
-            const processWipBtn = document.getElementById('process-wip-btn');
-            const processWipDirectBtn = document.getElementById('process-wip-direct-btn');
-            const wipDataTextarea = document.getElementById('wip-data-textarea');
-            const wipDataHidden = document.getElementById('wip-data-hidden');
-            const wipDataHiddenAlt = document.getElementById('wip-data-hidden-alt');
-            const wipDirectForm = document.getElementById('wip-direct-form');
-            const processWipText = document.getElementById('process-wip-text');
-            const processWipLoading = document.getElementById('process-wip-loading');
-            const wipAlertContainer = document.getElementById('wip-alert-container');
+        // Pure JavaScript functions for lot list modal
+        function getCurrentFilters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                date: urlParams.get('date') || '{{ date("Y-m-d") }}',
+                cutoff: urlParams.get('cutoff') || 'all',
+                worktype: urlParams.get('worktype') || 'all',
+                lottype: urlParams.get('lottype') || 'all'
+            };
+        }
 
-            // Function to show the direct submit button after a fetch error
-            function showDirectSubmitButton() {
-                if (processWipDirectBtn) {
-                    processWipDirectBtn.style.display = 'inline-block';
-                }
-            }
-
-            // Function to handle direct form submission
-            function handleDirectSubmit() {
-                // Get the WIP data from the textarea
-                const wipData = wipDataTextarea.value.trim();
-
-                // Validate the data
-                if (!wipData) {
-                    showWipAlert('error', 'No data provided. Please paste WIP data into the textarea.');
-                    return;
-                }
-
-                // Set the hidden input values
-                wipDataHidden.value = wipData;
-                wipDataHiddenAlt.value = wipData;
-
-                // Submit the form
-                wipDirectForm.submit();
-            }
-
-            // Add event listener for direct submit button
-            if (processWipDirectBtn) {
-                processWipDirectBtn.addEventListener('click', handleDirectSubmit);
-            }
-
-            if (processWipBtn && wipDataTextarea) {
-                processWipBtn.addEventListener('click', function() {
-                    // Get the WIP data from the textarea
-                    const wipData = wipDataTextarea.value.trim();
-
-                    // Validate the data
-                    if (!wipData) {
-                        showWipAlert('error', 'No data provided. Please paste WIP data into the textarea.');
-                        return;
-                    }
-
-                    // Show loading state
-                    processWipText.style.display = 'none';
-                    processWipLoading.style.display = 'inline-block';
-                    processWipBtn.disabled = true;
-
-                    // Get CSRF token
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-                    if (!csrfToken) {
-                        showWipAlert('error', 'CSRF token not found. Please refresh the page and try again.');
-                        resetWipButton();
-                        return;
-                    }
-
-                    // Log what we're sending for debugging
-                    console.log('Sending WIP data:', wipData.substring(0, 100) + '...');
-
-                    // Create the request body with both field names
-                    const requestBody = {
-                        wipData: wipData,
-                        wip_data: wipData
-                    };
-
-                    console.log('Request body:', requestBody);
-
-                    // Send the data to the server
-                    fetch('/api/process-wip-data', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(requestBody)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Reset button state
-                        resetWipButton();
-
-                        if (data.success) {
-                            // Show success message
-                            showWipAlert('success', `WIP data processed successfully. ${data.saved_count} records imported.`);
-
-                            // Clear the textarea
-                            wipDataTextarea.value = '';
-
-                            // Refresh the dashboard data after a short delay
-                            setTimeout(() => {
-                                showLoadingOverlay();
-                                window.location.reload();
-                            }, 2000);
-                        } else {
-                            // Show error message
-                            let errorMessage = data.message || 'An error occurred while processing the WIP data.';
-
-                            // If there are specific errors, show them
-                            if (data.errors && data.errors.length > 0) {
-                                errorMessage += '<ul>';
-                                data.errors.forEach(error => {
-                                    errorMessage += `<li>Row ${error.index + 1}: ${error.message}</li>`;
-                                });
-                                errorMessage += '</ul>';
-                            }
-
-                            showWipAlert('error', errorMessage);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error processing WIP data:', error);
-                        resetWipButton();
-                        showWipAlert('error', 'An unexpected error occurred. Please try the direct submit method below.');
-
-                        // Show the direct submit button as a fallback
-                        showDirectSubmitButton();
-                    });
+        function showEndtimeLotDetails() {
+            const filters = getCurrentFilters();
+            if (typeof window.showLotList === 'function') {
+                window.showLotList({
+                    date: filters.date,
+                    cutoff: filters.cutoff,
+                    worktype: filters.worktype,
+                    lottype: filters.lottype,
+                    type: 'endtime',
+                    title: 'Endtime Lots'
                 });
             }
+        }
 
-            // Function to show alert in the WIP modal
-            function showWipAlert(type, message) {
-                if (wipAlertContainer) {
-                    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-                    const icon = type === 'success' ? 'ri-check-line' : 'ri-error-warning-line';
-
-                    wipAlertContainer.innerHTML = `
-                        <div class="alert ${alertClass} alert-dismissible fade show">
-                            <i class="${icon} me-2"></i>${message}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `;
-
-                    // Scroll to the top of the modal
-                    wipAlertContainer.scrollIntoView({ behavior: 'smooth' });
-                }
+        function showSubmittedLotDetails() {
+            const filters = getCurrentFilters();
+            if (typeof window.showLotList === 'function') {
+                window.showLotList({
+                    date: filters.date,
+                    cutoff: filters.cutoff,
+                    worktype: filters.worktype,
+                    lottype: filters.lottype,
+                    type: 'submitted',
+                    title: 'Submitted Lots'
+                });
             }
+        }
 
-            // Function to reset the WIP button state
-            function resetWipButton() {
-                if (processWipText && processWipLoading && processWipBtn) {
-                    processWipText.style.display = 'inline';
-                    processWipLoading.style.display = 'none';
-                    processWipBtn.disabled = false;
-                }
+        function showRemainingLotDetails() {
+            const filters = getCurrentFilters();
+            if (typeof window.showLotList === 'function') {
+                window.showLotList({
+                    date: filters.date,
+                    cutoff: filters.cutoff,
+                    worktype: filters.worktype,
+                    lottype: filters.lottype,
+                    type: 'remaining',
+                    title: 'Remaining Lots'
+                });
             }
-        });
+        }
+
+        // Make functions globally available
+        window.showEndtimeLotDetails = showEndtimeLotDetails;
+        window.showSubmittedLotDetails = showSubmittedLotDetails;
+        window.showRemainingLotDetails = showRemainingLotDetails;
     </script>
 </div>

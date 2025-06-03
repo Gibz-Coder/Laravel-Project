@@ -10,14 +10,24 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover table-cutoff mb-0 text-nowrap">
+                <table class="table table-hover table-cutoff mb-0 text-nowrap" id="submitted-per-line-table">
                     <thead>
                         <tr class="fw-bold bg-primary-light text-primary">
-                            <th class="fw-bold bg-primary-light text-primary">Line</th>
-                            <th class="fw-bold bg-primary-light text-primary">Target</th>
-                            <th class="cutoff-border-start bg-primary-light text-primary">Result</th>
-                            <th class="fw-bold bg-primary-light text-primary">Rate %</th>
-                            <th class="cutoff-border-start bg-primary-light text-primary">Short</th>
+                            <th class="fw-bold bg-primary-light text-primary sortable-header" data-column="0" data-type="text" style="cursor: pointer;">
+                                Line <i class="ri-arrow-up-down-line sort-icon ms-1" style="opacity: 0.3;"></i>
+                            </th>
+                            <th class="fw-bold bg-primary-light text-primary sortable-header" data-column="1" data-type="number" style="cursor: pointer;">
+                                Tgt <i class="ri-arrow-up-down-line sort-icon ms-1" style="opacity: 0.3;"></i>
+                            </th>
+                            <th class="cutoff-border-start bg-primary-light text-primary sortable-header" data-column="2" data-type="number" style="cursor: pointer;">
+                                Res <i class="ri-arrow-up-down-line sort-icon ms-1" style="opacity: 0.3;"></i>
+                            </th>
+                            <th class="fw-bold bg-primary-light text-primary sortable-header" data-column="3" data-type="percentage" style="cursor: pointer;">
+                                % <i class="ri-arrow-up-down-line sort-icon ms-1" style="opacity: 0.3;"></i>
+                            </th>
+                            <th class="cutoff-border-start bg-primary-light text-primary sortable-header" data-column="4" data-type="number" style="cursor: pointer;">
+                                Short <i class="ri-arrow-up-down-line sort-icon ms-1" style="opacity: 0.3;"></i>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,5 +85,126 @@
         .table-cutoff th, .table-cutoff td {
             border: 1px solid #495057;
         }
+
+        /* Sort functionality styles */
+        .sortable-header:hover {
+            background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+        }
+        .sort-icon {
+            transition: opacity 0.2s ease;
+        }
+        .sortable-header:hover .sort-icon {
+            opacity: 0.7 !important;
+        }
+        .sort-icon.active {
+            opacity: 1 !important;
+        }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTableSorting();
+        });
+
+        // Re-initialize sorting after Livewire updates
+        document.addEventListener('livewire:navigated', function() {
+            initializeTableSorting();
+        });
+
+        function initializeTableSorting() {
+            const table = document.getElementById('submitted-per-line-table');
+            if (!table) return;
+
+            const headers = table.querySelectorAll('.sortable-header');
+            let currentSort = { column: -1, direction: 'asc' };
+
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = parseInt(this.dataset.column);
+                    const type = this.dataset.type;
+
+                    // Determine sort direction
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.direction = 'asc';
+                    }
+                    currentSort.column = column;
+
+                    // Update sort icons
+                    updateSortIcons(headers, column, currentSort.direction);
+
+                    // Sort the table
+                    sortTable(table, column, type, currentSort.direction);
+                });
+            });
+        }
+
+        function updateSortIcons(headers, activeColumn, direction) {
+            headers.forEach((header, index) => {
+                const icon = header.querySelector('.sort-icon');
+                const columnIndex = parseInt(header.dataset.column);
+
+                if (columnIndex === activeColumn) {
+                    icon.className = direction === 'asc' ? 'ri-arrow-up-line sort-icon ms-1 active' : 'ri-arrow-down-line sort-icon ms-1 active';
+                    icon.style.opacity = '1';
+                } else {
+                    icon.className = 'ri-arrow-up-down-line sort-icon ms-1';
+                    icon.style.opacity = '0.3';
+                }
+            });
+        }
+
+        function sortTable(table, column, type, direction) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // Separate the total row (last row) from data rows
+            const totalRow = rows[rows.length - 1];
+            const dataRows = rows.slice(0, -1);
+
+            // Sort data rows
+            dataRows.sort((a, b) => {
+                const aCell = a.cells[column];
+                const bCell = b.cells[column];
+
+                let aValue = getCellValue(aCell, type);
+                let bValue = getCellValue(bCell, type);
+
+                let comparison = 0;
+                if (type === 'text') {
+                    comparison = aValue.localeCompare(bValue);
+                } else {
+                    comparison = aValue - bValue;
+                }
+
+                return direction === 'asc' ? comparison : -comparison;
+            });
+
+            // Clear tbody and re-append sorted rows + total row
+            tbody.innerHTML = '';
+            dataRows.forEach(row => tbody.appendChild(row));
+            tbody.appendChild(totalRow);
+        }
+
+        function getCellValue(cell, type) {
+            const text = cell.textContent.trim();
+
+            switch (type) {
+                case 'number':
+                    // Extract number from text like "123.45M"
+                    const numberMatch = text.match(/[\d,]+\.?\d*/);
+                    return numberMatch ? parseFloat(numberMatch[0].replace(/,/g, '')) : 0;
+
+                case 'percentage':
+                    // Extract number from text like "95.5%"
+                    const percentMatch = text.match(/[\d.]+/);
+                    return percentMatch ? parseFloat(percentMatch[0]) : 0;
+
+                case 'text':
+                default:
+                    return text;
+            }
+        }
+    </script>
 </div>

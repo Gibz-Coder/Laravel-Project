@@ -647,8 +647,8 @@ class EndtimeDashboardController extends Controller
 
             foreach ($entries as $index => $entry) {
                 try {
-                    // Extract data from the entry
-                    $lotId = $entry['lot_id'];
+                    // Extract data from the entry and transform lot_id to uppercase
+                    $lotId = strtoupper(trim($entry['lot_id']));
                     $modelId = $entry['model_id'];
                     $lotQty = $entry['lot_qty'];
                     $mcNo = $entry['mc_no'];
@@ -656,6 +656,44 @@ class EndtimeDashboardController extends Controller
                     $endtimeDate = $entry['endtime_date'];
                     $cutoffTime = $entry['cutoff_time'];
                     $area = $entry['area'] ?? null;
+
+                    // Check for duplicate lot_id in the same cutoff and date (regardless of mc_no and lot_type)
+                    Log::info("Checking for duplicate lot_id in same cutoff", [
+                        'lot_id' => $lotId,
+                        'endtime_date' => $endtimeDate,
+                        'cutoff_time' => $cutoffTime
+                    ]);
+
+                    $duplicateLotQuery = ViProdEndtimeSubmitted::where('lot_id', $lotId)
+                        ->whereDate('endtime_date', $endtimeDate)
+                        ->where('cutoff_time', $cutoffTime);
+
+                    $existingLotEntry = $duplicateLotQuery->first();
+
+                    if ($existingLotEntry) {
+                        Log::warning("Duplicate lot_id found in same cutoff", [
+                            'lot_id' => $lotId,
+                            'endtime_date' => $endtimeDate,
+                            'cutoff_time' => $cutoffTime,
+                            'existing_mc_no' => $existingLotEntry->mc_no,
+                            'existing_lot_type' => $existingLotEntry->lot_type,
+                            'existing_status' => $existingLotEntry->status
+                        ]);
+
+                        $duplicates[] = [
+                            'index' => $index,
+                            'lot_id' => $lotId,
+                            'endtime_date' => $endtimeDate,
+                            'cutoff_time' => $cutoffTime,
+                            'existing_mc_no' => $existingLotEntry->mc_no,
+                            'existing_lot_type' => $existingLotEntry->lot_type,
+                            'existing_status' => $existingLotEntry->status,
+                            'reason' => "Same lot number already exists in this cutoff (MC: {$existingLotEntry->mc_no})"
+                        ];
+
+                        // Skip this entry
+                        continue;
+                    }
 
                     // Calculate qty_class based on chip_size and lot_qty
                     $qtyClass = 'large'; // Default to large
@@ -876,8 +914,8 @@ class EndtimeDashboardController extends Controller
 
             foreach ($entries as $index => $entry) {
                 try {
-                    // Extract data from the entry
-                    $lotId = $entry['lot_id'];
+                    // Extract data from the entry and transform lot_id to uppercase
+                    $lotId = strtoupper(trim($entry['lot_id']));
                     $modelId = $entry['model_id'];
                     $lotQty = $entry['lot_qty'];
                     $mcNo = $entry['mc_no'];
@@ -886,38 +924,64 @@ class EndtimeDashboardController extends Controller
                     $cutoffTime = $entry['cutoff_time'];
                     $area = $entry['area'] ?? null;
 
-                    // Check for existing entries with the same lot_id, mc_no, lot_type, endtime_date and status = PENDING
-                    Log::info("Checking for existing PENDING entry to update", [
+                    // Check for duplicate lot_id in the same cutoff and date (regardless of mc_no and lot_type)
+                    Log::info("Checking for duplicate lot_id in same cutoff", [
                         'lot_id' => $lotId,
-                        'mc_no' => $mcNo,
-                        'lot_type' => $lotType,
-                        'endtime_date' => $endtimeDate
+                        'endtime_date' => $endtimeDate,
+                        'cutoff_time' => $cutoffTime
                     ]);
 
-                    // Build the query for existing PENDING entries
-                    $pendingQuery = ViProdEndtimeSubmitted::where('lot_id', $lotId)
-                        ->where('mc_no', $mcNo)
-                        ->where('lot_type', $lotType)
+                    $duplicateLotQuery = ViProdEndtimeSubmitted::where('lot_id', $lotId)
                         ->whereDate('endtime_date', $endtimeDate)
-                        ->where('status', 'PENDING');
+                        ->where('cutoff_time', $cutoffTime);
 
-                    // Check if a pending entry exists to update
-                    $existingPendingEntry = $pendingQuery->first();
+                    $existingLotEntry = $duplicateLotQuery->first();
 
-                    if ($existingPendingEntry) {
-                        Log::info("Found existing PENDING entry to update to SUBMITTED", [
+                    if ($existingLotEntry) {
+                        // Special case: If same lot_id and same mc_no with PENDING status, update to SUBMITTED
+                        if ($existingLotEntry->mc_no === $mcNo && $existingLotEntry->status === 'PENDING') {
+                            Log::info("Found PENDING entry with same lot_id and mc_no, updating to SUBMITTED", [
+                                'lot_id' => $lotId,
+                                'mc_no' => $mcNo,
+                                'endtime_date' => $endtimeDate,
+                                'cutoff_time' => $cutoffTime
+                            ]);
+
+                            // Update the status to SUBMITTED
+                            $existingLotEntry->status = 'SUBMITTED';
+                            $existingLotEntry->save();
+
+                            $updatedEntries[] = $existingLotEntry;
+                            continue; // Skip to the next entry
+                        }
+
+                        // Otherwise, it's a duplicate with different MC or already SUBMITTED
+                        Log::warning("Duplicate lot_id found in same cutoff", [
                             'lot_id' => $lotId,
-                            'mc_no' => $mcNo,
-                            'endtime_date' => $endtimeDate
+                            'endtime_date' => $endtimeDate,
+                            'cutoff_time' => $cutoffTime,
+                            'existing_mc_no' => $existingLotEntry->mc_no,
+                            'existing_lot_type' => $existingLotEntry->lot_type,
+                            'existing_status' => $existingLotEntry->status,
+                            'new_mc_no' => $mcNo
                         ]);
 
-                        // Update the status to SUBMITTED
-                        $existingPendingEntry->status = 'SUBMITTED';
-                        $existingPendingEntry->save();
+                        $duplicates[] = [
+                            'index' => $index,
+                            'lot_id' => $lotId,
+                            'endtime_date' => $endtimeDate,
+                            'cutoff_time' => $cutoffTime,
+                            'existing_mc_no' => $existingLotEntry->mc_no,
+                            'existing_lot_type' => $existingLotEntry->lot_type,
+                            'existing_status' => $existingLotEntry->status,
+                            'reason' => "Same lot number already exists in this cutoff (MC: {$existingLotEntry->mc_no})"
+                        ];
 
-                        $updatedEntries[] = $existingPendingEntry;
-                        continue; // Skip to the next entry
+                        // Skip this entry
+                        continue;
                     }
+
+
 
                     // Check for duplicate entries (same lot_id, mc_no, lot_type, cutoff_time, endtime_date)
                     Log::info("Checking for duplicate entry", [
@@ -1120,7 +1184,7 @@ class EndtimeDashboardController extends Controller
     }
 
     /**
-     * Process WIP data from API request
+     * Process WIP data from API request (Pure JavaScript version)
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -1128,14 +1192,8 @@ class EndtimeDashboardController extends Controller
     public function processWipData(Request $request)
     {
         try {
-            // Increase memory and execution time limits for large data processing
-            ini_set('memory_limit', '512M');
-            ini_set('max_execution_time', 300); // 5 minutes
-
             // Log the start of processing
-            Log::info('Processing WIP data via API');
-            Log::info('Request method: ' . $request->method());
-            Log::info('Request headers: ' . json_encode($request->headers->all()));
+            Log::info('Processing WIP data via Pure JavaScript API');
 
             // Debug: Log the entire request for troubleshooting
             Log::info('WIP data request content:', [
@@ -1143,7 +1201,9 @@ class EndtimeDashboardController extends Controller
                 'content_type' => $request->header('Content-Type'),
                 'content_length' => $request->header('Content-Length'),
                 'content_preview' => substr($request->getContent(), 0, 200) . '...',
-                'method' => $request->method()
+                'method' => $request->method(),
+                'user_agent' => $request->header('User-Agent'),
+                'is_ajax' => $request->ajax()
             ]);
 
             // Check if we have data in the request content before validation
@@ -1216,8 +1276,10 @@ class EndtimeDashboardController extends Controller
             if (empty($rawWipData)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No data provided. Please paste WIP data into the textarea.'
-                ]);
+                    'message' => 'No data provided. Please paste WIP data into the textarea.',
+                    'error_code' => 'NO_DATA',
+                    'timestamp' => now()->toISOString()
+                ], 400);
             }
 
             // Parse the raw data (tab-separated values)
@@ -1423,7 +1485,14 @@ class EndtimeDashboardController extends Controller
                     'message' => 'WIP data processed successfully',
                     'saved_count' => $rowCount,
                     'error_count' => count($errors),
-                    'errors' => $errors
+                    'errors' => $errors,
+                    'timestamp' => now()->toISOString(),
+                    'processing_time' => round(microtime(true) - LARAVEL_START, 2) . 's',
+                    'data_summary' => [
+                        'total_rows_processed' => $rowCount,
+                        'successful_imports' => $rowCount - count($errors),
+                        'failed_imports' => count($errors)
+                    ]
                 ]);
 
             } catch (\Exception $e) {
@@ -1447,13 +1516,18 @@ class EndtimeDashboardController extends Controller
             }
 
             Log::error('Error in processWipData: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'success' => false,
                 'message' => 'An unexpected error occurred: ' . $e->getMessage(),
-                'error_details' => config('app.debug') ? $e->getTraceAsString() : null
-            ]);
+                'error_code' => 'PROCESSING_ERROR',
+                'timestamp' => now()->toISOString(),
+                'error_details' => [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => config('app.debug') ? $e->getTraceAsString() : 'Enable debug mode for detailed trace'
+                ]
+            ], 500);
         }
     }
 

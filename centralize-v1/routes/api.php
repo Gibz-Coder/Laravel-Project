@@ -42,3 +42,7 @@ Route::post('/save-auto-refresh-state', [EndtimeDashboardController::class, 'sav
 
 // Process WIP data
 Route::post('/process-wip-data', [EndtimeDashboardController::class, 'processWipData']);
+
+// Lot List Modal API routes (Pure JavaScript)
+Route::post('/lot-list', [App\Http\Controllers\LotListController::class, 'getLotList']);
+Route::post('/lot-list/filter-options', [App\Http\Controllers\LotListController::class, 'getFilterOptions']);

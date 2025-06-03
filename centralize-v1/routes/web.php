@@ -31,9 +31,6 @@ Route::middleware(['auth', \App\Http\Middleware\CheckUserStatus::class])->group(
 
     // Save endtime API
     Route::post('/api/save-endtime', [EndtimeDashboardController::class, 'saveEndtime'])->name('endtime.save');
-
-    // Process WIP data API (with CSRF protection)
-    Route::post('/api/process-wip-data', [EndtimeDashboardController::class, 'processWipData'])->name('wip.process');
 });
 
 // API routes have been moved to routes/api.php
